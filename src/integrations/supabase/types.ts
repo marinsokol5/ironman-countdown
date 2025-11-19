@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          race_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          race_date: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          race_date?: string
+        }
+        Relationships: []
+      }
+      race_estimates: {
+        Row: {
+          bike_minutes: number
+          created_at: string | null
+          id: string
+          run_minutes: number
+          swim_minutes: number
+          t1_minutes: number
+          t2_minutes: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bike_minutes?: number
+          created_at?: string | null
+          id?: string
+          run_minutes?: number
+          swim_minutes?: number
+          t1_minutes?: number
+          t2_minutes?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bike_minutes?: number
+          created_at?: string | null
+          id?: string
+          run_minutes?: number
+          swim_minutes?: number
+          t1_minutes?: number
+          t2_minutes?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          created_at: string | null
+          date: string
+          distance_km: number
+          duration_minutes: number
+          id: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          distance_km: number
+          duration_minutes: number
+          id?: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          distance_km?: number
+          duration_minutes?: number
+          id?: string
+          sport?: Database["public"]["Enums"]["sport_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +106,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      sport_type: "swim" | "bike" | "run"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +233,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      sport_type: ["swim", "bike", "run"],
+    },
   },
 } as const
