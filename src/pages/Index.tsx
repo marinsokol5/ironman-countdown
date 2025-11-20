@@ -3,9 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User } from "@supabase/supabase-js";
-import { Calendar, Bike, Waves, PersonStanding, Clock } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
+import { Calendar, Bike, Waves, PersonStanding, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, differenceInDays, startOfWeek, endOfWeek, isWithinInterval, addWeeks, subWeeks } from "date-fns";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -14,6 +18,13 @@ const Index = () => {
   const [profile, setProfile] = useState<any>(null);
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [raceEstimate, setRaceEstimate] = useState<any>(null);
+  const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  
+  // Form state
+  const [sport, setSport] = useState<string>("swim");
+  const [workoutDate, setWorkoutDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [distance, setDistance] = useState("");
+  const [duration, setDuration] = useState("");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -53,13 +64,12 @@ const Index = () => {
     
     setProfile(profileData);
 
-    // Fetch recent workouts
+    // Fetch all workouts (not just recent ones)
     const { data: workoutsData } = await supabase
       .from("workouts")
       .select("*")
       .eq("user_id", user.id)
-      .order("date", { ascending: false })
-      .limit(5);
+      .order("date", { ascending: false });
     
     setWorkouts(workoutsData || []);
 
@@ -71,6 +81,36 @@ const Index = () => {
       .maybeSingle();
     
     setRaceEstimate(estimateData);
+  };
+
+  const handleLogWorkout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user || !distance || !duration) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("workouts")
+      .insert([{
+        user_id: user.id,
+        sport: sport as "swim" | "bike" | "run",
+        date: workoutDate,
+        distance_km: parseFloat(distance),
+        duration_minutes: parseInt(duration),
+      }]);
+
+    if (error) {
+      toast.error("Failed to log workout");
+      console.error(error);
+    } else {
+      toast.success("Workout logged successfully!");
+      setDistance("");
+      setDuration("");
+      setWorkoutDate(format(new Date(), "yyyy-MM-dd"));
+      fetchUserData();
+    }
   };
 
   const handleSignOut = async () => {
@@ -113,47 +153,96 @@ const Index = () => {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
+  const getSportColor = (sport: string) => {
+    switch (sport) {
+      case "swim": return "bg-swim";
+      case "bike": return "bg-bike";
+      case "run": return "bg-run";
+      default: return "bg-muted";
+    }
+  };
+
+  const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
+  const weeklyWorkouts = workouts.filter(workout => 
+    isWithinInterval(new Date(workout.date), { start: currentWeekStart, end: weekEnd })
+  );
+
+  const goToPreviousWeek = () => {
+    setCurrentWeekStart(subWeeks(currentWeekStart, 1));
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeekStart(addWeeks(currentWeekStart, 1));
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold">Triathlon Trainer</h1>
-            <p className="text-muted-foreground mt-1">{user.email}</p>
+            <h1 className="text-3xl font-bold">Ironman 70.3 Trainer</h1>
+            <p className="text-muted-foreground text-sm mt-1">{user.email}</p>
           </div>
-          <Button onClick={handleSignOut} variant="outline">
+          <Button onClick={handleSignOut} variant="outline" size="sm">
             Sign Out
           </Button>
         </div>
 
         {/* Race Countdown Card */}
+        {/* Large Race Countdown */}
         {profile?.race_date && (
           <Card className="border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Race Day
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-2xl font-bold">
-                  {format(new Date(profile.race_date), "MMMM d, yyyy")}
-                </p>
-                {daysUntilRace !== null && (
-                  <p className="text-muted-foreground">
-                    {daysUntilRace > 0 
-                      ? `${daysUntilRace} days to go` 
-                      : daysUntilRace === 0 
-                      ? "Race day is today!" 
-                      : "Race completed"}
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Race Day</p>
+                  <p className="text-xl font-medium">
+                    {format(new Date(profile.race_date), "MMMM d, yyyy")}
                   </p>
+                </div>
+                {daysUntilRace !== null && (
+                  <div>
+                    <p className="text-7xl font-bold text-primary">{daysUntilRace}</p>
+                    <p className="text-muted-foreground mt-2">
+                      {daysUntilRace > 0 
+                        ? "days until race" 
+                        : daysUntilRace === 0 
+                        ? "Race day is today!" 
+                        : "days since race"}
+                    </p>
+                  </div>
                 )}
-                {totalEstimatedTime && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4" />
-                    <span>Estimated finish: {formatDuration(totalEstimatedTime)}</span>
+                {raceEstimate && (
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground mb-3">Estimated Finish Time</p>
+                    <p className="text-3xl font-bold mb-4">{formatDuration(totalEstimatedTime!)}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground mb-1">Swim</p>
+                        <p className="font-semibold">{formatDuration(raceEstimate.swim_minutes)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground mb-1">T1</p>
+                        <p className="font-semibold">{formatDuration(raceEstimate.t1_minutes)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground mb-1">Bike</p>
+                        <p className="font-semibold">{formatDuration(raceEstimate.bike_minutes)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground mb-1">T2</p>
+                        <p className="font-semibold">{formatDuration(raceEstimate.t2_minutes)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground mb-1">Run</p>
+                        <p className="font-semibold">{formatDuration(raceEstimate.run_minutes)}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -161,81 +250,119 @@ const Index = () => {
           </Card>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Workouts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{workouts.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Recent sessions</p>
-            </CardContent>
-          </Card>
-
-          {raceEstimate && (
-            <>
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Waves className="h-4 w-4" />
-                    Swim Target
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{formatDuration(raceEstimate.swim_minutes)}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Bike className="h-4 w-4" />
-                    Bike Target
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{formatDuration(raceEstimate.bike_minutes)}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <PersonStanding className="h-4 w-4" />
-                    Run Target
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{formatDuration(raceEstimate.run_minutes)}</div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
-
-        {/* Recent Workouts */}
+        {/* Log Workout Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Workouts</CardTitle>
-            <CardDescription>Your latest training sessions</CardDescription>
+            <CardTitle>Log Workout</CardTitle>
           </CardHeader>
           <CardContent>
-            {workouts.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No workouts logged yet. Start training!</p>
+            <form onSubmit={handleLogWorkout} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sport">Sport</Label>
+                  <Select value={sport} onValueChange={setSport}>
+                    <SelectTrigger id="sport">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="swim">Swim</SelectItem>
+                      <SelectItem value="bike">Bike</SelectItem>
+                      <SelectItem value="run">Run</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={workoutDate}
+                    onChange={(e) => setWorkoutDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="distance">Distance (km)</Label>
+                  <Input
+                    id="distance"
+                    type="number"
+                    step="0.1"
+                    placeholder="10.5"
+                    value={distance}
+                    onChange={(e) => setDistance(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Time (minutes)</Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    placeholder="45"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full">Add Workout</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Weekly Workouts */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Weekly Workouts</CardTitle>
+                <CardDescription>
+                  {format(currentWeekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={goToPreviousWeek}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToCurrentWeek}
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={goToNextWeek}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {weeklyWorkouts.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-8">No workouts this week</p>
             ) : (
-              <div className="space-y-3">
-                {workouts.map((workout) => (
+              <div className="space-y-2">
+                {weeklyWorkouts.map((workout) => (
                   <div 
                     key={workout.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className={`flex items-center justify-between p-3 rounded-lg ${getSportColor(workout.sport)}/10 border border-${workout.sport === 'swim' ? 'swim' : workout.sport === 'bike' ? 'bike' : 'run'}/20`}
                   >
                     <div className="flex items-center gap-3">
-                      {getSportIcon(workout.sport)}
+                      <div className={`p-2 rounded-full ${getSportColor(workout.sport)}/20`}>
+                        {getSportIcon(workout.sport)}
+                      </div>
                       <div>
                         <p className="font-medium capitalize">{workout.sport}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(workout.date), "MMM d, yyyy")}
+                          {format(new Date(workout.date), "EEEE, MMM d")}
                         </p>
                       </div>
                     </div>
@@ -251,16 +378,6 @@ const Index = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Button size="lg" className="w-full">
-            Log Workout
-          </Button>
-          <Button size="lg" variant="outline" className="w-full">
-            View All Workouts
-          </Button>
-        </div>
       </div>
     </div>
   );
