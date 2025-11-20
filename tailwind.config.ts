@@ -57,6 +57,9 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        swim: "hsl(var(--swim))",
+        bike: "hsl(var(--bike))",
+        run: "hsl(var(--run))",
       },
       borderRadius: {
         lg: "var(--radius)",
