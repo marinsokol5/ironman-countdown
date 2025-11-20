@@ -25,6 +25,7 @@ const Index = () => {
   const [workoutDate, setWorkoutDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
+  const [isUpdatingEstimates, setIsUpdatingEstimates] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -110,6 +111,26 @@ const Index = () => {
       setDuration("");
       setWorkoutDate(format(new Date(), "yyyy-MM-dd"));
       fetchUserData();
+      updateAIEstimates();
+    }
+  };
+
+  const updateAIEstimates = async () => {
+    setIsUpdatingEstimates(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('estimate-race-time');
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast.success(`AI analyzed ${data.workoutCount} workouts to update your predictions`);
+        fetchUserData();
+      }
+    } catch (error: any) {
+      console.error('Error updating estimates:', error);
+      toast.error("Couldn't update AI estimates, but workout was saved");
+    } finally {
+      setIsUpdatingEstimates(false);
     }
   };
 
@@ -305,7 +326,9 @@ const Index = () => {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full">Add Workout</Button>
+              <Button type="submit" className="w-full" disabled={isUpdatingEstimates}>
+                {isUpdatingEstimates ? 'Updating AI Estimates...' : 'Add Workout'}
+              </Button>
             </form>
           </CardContent>
         </Card>
