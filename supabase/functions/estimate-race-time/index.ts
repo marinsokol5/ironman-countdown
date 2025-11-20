@@ -133,8 +133,15 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
       throw new Error("No response from AI");
     }
 
-    // Parse JSON from AI response
-    const estimates = JSON.parse(content.trim());
+    // Parse JSON from AI response - strip markdown code blocks if present
+    let jsonContent = content.trim();
+    if (jsonContent.startsWith('```')) {
+      // Remove opening ``` or ```json
+      jsonContent = jsonContent.replace(/^```(?:json)?\n?/, '');
+      // Remove closing ```
+      jsonContent = jsonContent.replace(/\n?```$/, '');
+    }
+    const estimates = JSON.parse(jsonContent);
 
     // Update race_estimates table
     const { error: updateError } = await supabaseClient
