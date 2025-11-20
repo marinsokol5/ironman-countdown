@@ -1,1 +1,4 @@
 project_id = "vjfcdxsxsztbuxtqqecd"
+
+[functions.estimate-race-time]
+verify_jwt = true
