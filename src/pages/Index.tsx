@@ -246,7 +246,17 @@ const Index = () => {
                 )}
                 {raceEstimate && (
                   <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground mb-3">Estimated Finish Time</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm text-muted-foreground">Estimated Finish Time</p>
+                      <Button 
+                        onClick={updateAIEstimates} 
+                        disabled={isUpdatingEstimates}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {isUpdatingEstimates ? 'Updating...' : 'Recalculate'}
+                      </Button>
+                    </div>
                     <p className="text-3xl font-bold mb-4">{formatDuration(totalEstimatedTime!)}</p>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
                       <div>
