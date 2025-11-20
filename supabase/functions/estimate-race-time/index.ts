@@ -49,110 +49,34 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    // Fetch user's workouts
-    const { data: workouts, error: workoutsError } = await supabaseClient
-      .from('workouts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('date', { ascending: false });
-
-    if (workoutsError) throw workoutsError;
-
-    // Calculate workout statistics
-    const stats = {
-      swim: { count: 0, totalDistance: 0, totalTime: 0 },
-      bike: { count: 0, totalDistance: 0, totalTime: 0 },
-      run: { count: 0, totalDistance: 0, totalTime: 0 }
-    };
-
-    workouts?.forEach(w => {
-      const sport = w.sport as 'swim' | 'bike' | 'run';
-      stats[sport].count++;
-      stats[sport].totalDistance += w.distance_km;
-      stats[sport].totalTime += w.duration_minutes;
-    });
-
-    // Calculate average paces
-    const avgPaces = {
-      swim: stats.swim.totalDistance > 0 ? stats.swim.totalTime / stats.swim.totalDistance : 0,
-      bike: stats.bike.totalDistance > 0 ? stats.bike.totalTime / stats.bike.totalDistance : 0,
-      run: stats.run.totalDistance > 0 ? stats.run.totalTime / stats.run.totalDistance : 0
-    };
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
-    const prompt = `You are an Ironman 70.3 race time estimator. Based on the following training data, estimate realistic finish times for each segment.
-
-Training Statistics:
-- Swim: ${stats.swim.count} workouts, ${stats.swim.totalDistance.toFixed(1)} km total, avg pace ${avgPaces.swim.toFixed(2)} min/km
-- Bike: ${stats.bike.count} workouts, ${stats.bike.totalDistance.toFixed(1)} km total, avg pace ${avgPaces.bike.toFixed(2)} min/km
-- Run: ${stats.run.count} workouts, ${stats.run.totalDistance.toFixed(1)} km total, avg pace ${avgPaces.run.toFixed(2)} min/km
-
-Ironman 70.3 distances:
-- Swim: 1.9 km
-- Bike: 90 km
-- Run: 21.1 km
-
-Please estimate finish times in minutes for each segment, plus transition times (T1: 3 min, T2: 3 min). Consider that race pace is typically slower than training pace due to race conditions and fatigue. If there's limited training data, provide conservative estimates.
-
-Return ONLY a JSON object with this exact structure (no markdown, no explanations):
-{
-  "swim_minutes": <number>,
-  "t1_minutes": 3,
-  "bike_minutes": <number>,
-  "t2_minutes": 3,
-  "run_minutes": <number>,
-  "confidence": "<high/medium/low>"
-}`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "user", content: prompt }
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI gateway error");
-    }
-
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
+    // Generate random finish time between 4-6 hours (240-360 minutes)
+    const totalMinutes = 240 + Math.random() * 120;
     
-    if (!content) {
-      throw new Error("No response from AI");
-    }
+    // Distribute time across segments with realistic proportions
+    // Ironman 70.3: Swim 1.9km, Bike 90km, Run 21.1km
+    // Typical distribution: Swim ~10-15%, Bike ~50-55%, Run ~30-35%
+    const swimPercent = 0.10 + Math.random() * 0.05; // 10-15%
+    const bikePercent = 0.50 + Math.random() * 0.05; // 50-55%
+    const runPercent = 1 - swimPercent - bikePercent - 0.02; // Remaining minus transitions
+    
+    const swim_minutes = Math.round(totalMinutes * swimPercent);
+    const bike_minutes = Math.round(totalMinutes * bikePercent);
+    const run_minutes = Math.round(totalMinutes * runPercent);
+    const t1_minutes = 3;
+    const t2_minutes = 3;
 
-    // Parse JSON from AI response - strip markdown code blocks if present
-    let jsonContent = content.trim();
-    if (jsonContent.startsWith('```')) {
-      // Remove opening ``` or ```json
-      jsonContent = jsonContent.replace(/^```(?:json)?\n?/, '');
-      // Remove closing ```
-      jsonContent = jsonContent.replace(/\n?```$/, '');
-    }
-    const estimates = JSON.parse(jsonContent);
+    console.log('Generated estimates:', { swim_minutes, bike_minutes, run_minutes });
 
     // Update race_estimates table
     const { error: updateError } = await supabaseClient
       .from('race_estimates')
       .upsert({
         user_id: user.id,
-        swim_minutes: estimates.swim_minutes,
-        t1_minutes: estimates.t1_minutes,
-        bike_minutes: estimates.bike_minutes,
-        t2_minutes: estimates.t2_minutes,
-        run_minutes: estimates.run_minutes,
+        swim_minutes,
+        t1_minutes,
+        bike_minutes,
+        t2_minutes,
+        run_minutes,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' });
 
@@ -161,8 +85,14 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
     return new Response(
       JSON.stringify({ 
         success: true, 
-        estimates,
-        workoutCount: workouts?.length || 0
+        estimates: {
+          swim_minutes,
+          t1_minutes,
+          bike_minutes,
+          t2_minutes,
+          run_minutes,
+          confidence: "medium"
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
