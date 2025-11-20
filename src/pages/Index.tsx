@@ -120,13 +120,27 @@ const Index = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        toast.error("You must be logged in to update estimates");
+        return;
+      }
+      
       const { data, error } = await supabase.functions.invoke('estimate-race-time', {
         headers: {
-          Authorization: `Bearer ${session?.access_token}`
+          Authorization: `Bearer ${session.access_token}`
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Function error:', error);
+        throw error;
+      }
+      
+      if (data?.error) {
+        console.error('Response error:', data.error);
+        toast.error(data.error);
+        return;
+      }
       
       if (data?.success) {
         toast.success(`AI analyzed ${data.workoutCount} workouts to update your predictions`);
@@ -134,7 +148,7 @@ const Index = () => {
       }
     } catch (error: any) {
       console.error('Error updating estimates:', error);
-      toast.error("Couldn't update AI estimates, but workout was saved");
+      toast.error(error.message || "Couldn't update AI estimates");
     } finally {
       setIsUpdatingEstimates(false);
     }
