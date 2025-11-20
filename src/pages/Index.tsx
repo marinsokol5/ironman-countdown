@@ -118,7 +118,13 @@ const Index = () => {
   const updateAIEstimates = async () => {
     setIsUpdatingEstimates(true);
     try {
-      const { data, error } = await supabase.functions.invoke('estimate-race-time');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('estimate-race-time', {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
+      });
       
       if (error) throw error;
       
