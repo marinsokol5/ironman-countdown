@@ -12,6 +12,7 @@ import { format, differenceInDays, startOfWeek, endOfWeek, isWithinInterval, add
 import { toast } from "sonner";
 import { WorkoutImageUpload } from "@/components/WorkoutImageUpload";
 import { WorkoutStatistics } from "@/components/WorkoutStatistics";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const Index = () => {
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
   const [isUpdatingEstimates, setIsUpdatingEstimates] = useState(false);
+
+  // Enable real-time notifications
+  useRealtimeNotifications();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
