@@ -10,6 +10,7 @@ import { User } from "@supabase/supabase-js";
 import { Calendar, Bike, Waves, PersonStanding, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, differenceInDays, startOfWeek, endOfWeek, isWithinInterval, addWeeks, subWeeks } from "date-fns";
 import { toast } from "sonner";
+import { WorkoutImageUpload } from "@/components/WorkoutImageUpload";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -301,10 +302,13 @@ const Index = () => {
           </Card>
         )}
 
+        {/* Upload Workout Image */}
+        <WorkoutImageUpload userId={user.id} onWorkoutExtracted={fetchUserData} />
+
         {/* Log Workout Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Log Workout</CardTitle>
+            <CardTitle>Manual Log</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogWorkout} className="space-y-4">
