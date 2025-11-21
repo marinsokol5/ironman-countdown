@@ -68,6 +68,33 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_statistics: {
+        Row: {
+          avg_distance_km: number | null
+          avg_duration_minutes: number | null
+          calculated_at: string | null
+          id: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          total_workouts: number | null
+        }
+        Insert: {
+          avg_distance_km?: number | null
+          avg_duration_minutes?: number | null
+          calculated_at?: string | null
+          id?: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          total_workouts?: number | null
+        }
+        Update: {
+          avg_distance_km?: number | null
+          avg_duration_minutes?: number | null
+          calculated_at?: string | null
+          id?: string
+          sport?: Database["public"]["Enums"]["sport_type"]
+          total_workouts?: number | null
+        }
+        Relationships: []
+      }
       workouts: {
         Row: {
           created_at: string | null

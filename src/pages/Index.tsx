@@ -11,6 +11,7 @@ import { Calendar, Bike, Waves, PersonStanding, Clock, ChevronLeft, ChevronRight
 import { format, differenceInDays, startOfWeek, endOfWeek, isWithinInterval, addWeeks, subWeeks } from "date-fns";
 import { toast } from "sonner";
 import { WorkoutImageUpload } from "@/components/WorkoutImageUpload";
+import { WorkoutStatistics } from "@/components/WorkoutStatistics";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -301,6 +302,9 @@ const Index = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Community Statistics */}
+        <WorkoutStatistics />
 
         {/* Upload Workout Image */}
         <WorkoutImageUpload userId={user.id} onWorkoutExtracted={fetchUserData} />
