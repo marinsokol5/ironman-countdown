@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.extract-workout]
 verify_jwt = true
+
+[functions.calculate-statistics]
+verify_jwt = false
