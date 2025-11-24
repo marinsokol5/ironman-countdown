@@ -36,3 +36,27 @@ AWS Aurora is the preferred database option for production applications.
 - Install `psql` locally for debugging: `brew install postgresql`
 - Connect via: `psql -h <endpoint> -U <username> -d <database>`
 
+## Supabase (Legacy)
+
+This application uses Supabase for existing database tables and authentication.
+
+### Usage Guidelines
+
+- **Continue using existing Supabase tables** - Do not migrate existing data unless specifically asked
+- **Do NOT create new tables in Supabase** - Use AWS Aurora for new tables
+- **Use Supabase CLI for all interactions** - Never use the web console, execute CLI commands on customer's behalf, only ask for required input
+
+### Supabase CLI Setup
+
+- Login: `npx supabase login`
+- Link project: `npx supabase link --project-ref <project-id>`
+- Pull schema: `npx supabase db pull` to sync local migrations
+- Generate types: `npx supabase gen types typescript --local > types/supabase.ts`
+
+### Database Operations
+
+- Create migrations: `npx supabase migration new <migration-name>`
+- Apply migrations: `npx supabase db push`
+- Reset database: `npx supabase db reset` (local only)
+- View logs: `npx supabase logs db`
+
