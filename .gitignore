@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# CDK
+infra/cdk.out
+infra/node_modules
+infra/*.js
+infra/*.d.ts
+!infra/bin/*.js
+!infra/lib/**/*.js
+infra/.cdk.staging
+infra/*.template.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

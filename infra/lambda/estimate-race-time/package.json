@@ -1,0 +1,11 @@
+{
+  "name": "estimate-race-time-function",
+  "version": "1.0.0",
+  "description": "Estimate race time Lambda function",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.700.0",
+    "@supabase/supabase-js": "^2.83.0"
+  }
+}
+
