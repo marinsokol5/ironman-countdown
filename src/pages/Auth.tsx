@@ -15,7 +15,6 @@ const authSchema = z.object({
 });
 
 const Auth = () => {
-  console.log(import.meta.env.VITE_SUPABASE_URL);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -137,6 +136,7 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
+      console.log("marin trying", window.location.origin);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
