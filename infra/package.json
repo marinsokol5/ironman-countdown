@@ -13,8 +13,6 @@
     "deploy:preview": "cdk deploy --all --require-approval never --progress events",
     "deploy:dev": "cdk deploy --all --context environment=dev --require-approval never --progress events",
     "deploy:prod": "cdk deploy --all --context environment=prod --progress events",
-    "deploy:pipeline": "cdk deploy IronmanCountdownPipelineStack --context codeConnectionArn=$CODE_CONNECTION_ARN --context repositoryName=marinsokol5/ironman-countdown --context branchName=main --context pipelineOnly=true",
-    "destroy:pipeline": "cdk destroy IronmanCountdownPipelineStack --context codeConnectionArn=$CODE_CONNECTION_ARN --context pipelineOnly=true",
     "destroy": "cdk destroy --all",
     "synth": "cdk synth",
     "diff": "cdk diff"
