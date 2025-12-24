@@ -161,13 +161,13 @@ const Index = () => {
   };
 
   const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      // Ignore 403 errors - session may already be invalidated server-side
-      console.log("Sign out completed");
+    // Clear local session (avoids 403 "/logout" when server session is already gone)
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+
+    if (error) {
+      toast.error(error.message || "Couldn't sign out");
     }
-    // Always navigate to auth page and clear local state
+
     setUser(null);
     navigate("/auth");
   };
