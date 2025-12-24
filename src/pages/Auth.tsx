@@ -136,13 +136,13 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      console.log("marin trying", window.location.origin);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
+      console.log("marin", window.location.origin);
+      // const { error } = await supabase.auth.signInWithOAuth({
+      //  provider: 'google',
+      //  options: {
+      //    redirectTo: `${window.location.origin}/`,
+      //  },
+      // });
 
       if (error) {
         toast({
