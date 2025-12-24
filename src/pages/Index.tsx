@@ -161,7 +161,14 @@ const Index = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      // Ignore 403 errors - session may already be invalidated server-side
+      console.log("Sign out completed");
+    }
+    // Always navigate to auth page and clear local state
+    setUser(null);
     navigate("/auth");
   };
 
