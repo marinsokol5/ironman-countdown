@@ -15,6 +15,7 @@ const authSchema = z.object({
 });
 
 const Auth = () => {
+  console.log(import.meta.env.VITE_SUPABASE_URL);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +28,9 @@ const Auth = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/");
       }
@@ -38,13 +41,13 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const validatedData = authSchema.parse({ email, password });
       setLoading(true);
 
       const redirectUrl = `${window.location.origin}/`;
-      
+
       const { error } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
@@ -74,7 +77,7 @@ const Auth = () => {
         title: "Check your email",
         description: "We've sent you a confirmation link to complete your registration.",
       });
-      
+
       setEmail("");
       setPassword("");
     } catch (error) {
@@ -92,7 +95,7 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const validatedData = authSchema.parse({ email, password });
       setLoading(true);
@@ -135,7 +138,7 @@ const Auth = () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/`,
         },
@@ -164,9 +167,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Triathlon Trainer</CardTitle>
-          <CardDescription className="text-center">
-            Track your training and race progress
-          </CardDescription>
+          <CardDescription className="text-center">Track your training and race progress</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -174,7 +175,7 @@ const Auth = () => {
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
@@ -202,18 +203,16 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
-                
+
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
+                    <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
-                
+
                 <Button
                   type="button"
                   variant="outline"
@@ -243,7 +242,7 @@ const Auth = () => {
                 </Button>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
@@ -271,18 +270,16 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Creating account..." : "Sign Up"}
                 </Button>
-                
+
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
+                    <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
-                
+
                 <Button
                   type="button"
                   variant="outline"
